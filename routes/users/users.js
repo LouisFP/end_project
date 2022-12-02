@@ -4,7 +4,7 @@ const passport = require("passport");
 const bcrypt = require("bcrypt");
 const db = require("../../db");
 const bodyParser = require("body-parser");
-
+const carts = require("../carts/carts");
 ////////////////////////////////////////////////////////
 // Need to ensure authentication                      //
 // ie for get all users must be an admin              //
@@ -32,6 +32,8 @@ users.param("userId", (req, res, next, id) => {
     }
   );
 });
+
+users.use("/:userId/carts", carts);
 
 // Get all users (add in only if admin)
 users.get("/", (req, res, next) => {
@@ -120,7 +122,7 @@ users.post("/register", async (req, res, next) => {
 users.post(
   "/login",
   passport.authenticate("local", {
-    successRedirect: "/books",
+    successRedirect: "/user/:userId",
     failureRedirect: "/login",
   }),
   (req, res) => {

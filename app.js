@@ -3,10 +3,14 @@ const db = require("./db/index.js");
 const bodyParser = require("body-parser");
 const passport = require("passport");
 const session = require("express-session");
-const books = require("./routes/products/books");
-const users = require("./routes/users/users");
+const logger = require("morgan");
+
 const { v4: uuidv4 } = require("uuid");
 const PORT = process.env.PORT || 3000;
+
+// Express routing imports
+const books = require("./routes/products/books");
+const users = require("./routes/users/users");
 
 const app = express();
 
@@ -22,7 +26,9 @@ liveReloadServer.server.once("connection", () => {
 app.use(connectLiveReload());
 
 app.use(bodyParser.json());
+app.use(logger("dev"));
 
+// Express routing
 require("./routes/passport")(passport, db);
 app.use("/books", books);
 app.use("/users", users);
