@@ -22,7 +22,7 @@ cart_items.param("bookId", (req, res, next, id) => {
 });
 
 // Get a cartItem by userId, cartId and bookId
-cart_items.get("/", (req, res, next) => {
+cart_items.get("/:bookId", (req, res, next) => {
   const { userId, cartId } = req.params;
   db.query(
     `SELECT 
@@ -38,7 +38,7 @@ cart_items.get("/", (req, res, next) => {
     WHERE carts.user_id = $1
     AND cart_items.book_id = $2
     AND cart_items.cart_id = $3`,
-    [userId, req.body.bookId, cartId],
+    [userId, req.params.bookId, cartId],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);

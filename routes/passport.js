@@ -1,17 +1,35 @@
+const express = require("express");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const db = require("../db");
 
 module.exports = (passport, db) => {
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser((id, done) => {
+    db.query(
+      "SELECT id, username FROM users WHERE id = $1",
+      [id],
+      (error, results) => {
+        if (error) {
+          return done(error);
+        } else {
+          console.log(results.rows[0]);
+          return done(null, results.rows[0]);
+        }
+      }
+    );
+  });
   passport.use(
     new LocalStrategy(function (username, password, done) {
       db.query(
-        "SELECT * FROM WHERE username = $1",
+        "SELECT * FROM users WHERE username = $1",
         [username],
-        async (error, results) => {
-          console.log(results);
-          if (err) {
-            return done(err);
+        (error, results) => {
+          if (error) {
+            return done(error);
           }
           if (results.rows.length > 0) {
             const data = results.rows[0];
@@ -32,23 +50,4 @@ module.exports = (passport, db) => {
       );
     })
   );
-
-  passport.serializeUser((user, done) => {
-    console.log("Serialising user");
-    done(null, user.id);
-  });
-
-  passport.deserializeUser((id, done) => {
-    db.query(
-      "SELECT id, username FROM users WHERE id = $1",
-      [parseInt(id, 10)],
-      (error, results) => {
-        if (error) {
-          return done(error);
-        } else {
-          return done(null, results.rows[0]);
-        }
-      }
-    );
-  });
 };
