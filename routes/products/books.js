@@ -28,6 +28,8 @@ books.use(bodyParser.json());
 // Gets all books
 books.get("/", (req, res, next) => {
   db.query("SELECT * FROM books ORDER BY id ASC", (error, results) => {
+    console.log(req.session);
+    console.log(req.session.passport.user);
     if (error) {
       res.status(400).send(error.stack);
     } else {
@@ -43,24 +45,6 @@ books.get("/:bookId", (req, res, next) => {
     [req.bookIndex],
     (error, results) => {
       res.status(200).json(results.rows);
-    }
-  );
-});
-
-// Get books by genre
-books.get("/", (req, res, next) => {
-  if (!req.query.genre) {
-    return next();
-  }
-  db.query(
-    "SELECT * FROM books WHERE genre = $1",
-    [req.query.genre],
-    (error, results) => {
-      if (error) {
-        res.status(400).send(error.stack);
-      } else {
-        res.status(200).json(results.rows);
-      }
     }
   );
 });

@@ -78,10 +78,6 @@ users.put("/:userId", (req, res, next) => {
   );
 });
 
-users.get("/login", (req, res, next) => {
-  res.send("Hello");
-});
-
 // Register a user
 users.post("/register", async (req, res, next) => {
   const { username, password, email } = req.body;
@@ -116,27 +112,6 @@ users.post("/register", async (req, res, next) => {
       }
     }
   );
-});
-
-// Log in User
-users.post(
-  "/login",
-  passport.authenticate("local", {
-    successRedirect: "/user/:userId",
-    failureRedirect: "/login",
-  }),
-  (req, res) => {
-    res.send(user);
-    console.log("Logging in");
-  }
-);
-
-// Log out User
-users.get("/logout", (req, res) => {
-  req.logout((err) => {
-    return next(err);
-  });
-  res.redirect("/login");
 });
 
 // users.get("/register", (req, res) => {
