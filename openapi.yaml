@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  title: Bookstore API
+  version: 1.0.0
+  description: Basic demo e-commerce API
+tags:
+  - name: books
+    description: All the products routes of the demo online store
+  - name: Users
+    description: Indicates all non-product routes in the API
+paths:
+  /books:
+    description: Returns all books
+    get:
+      summary: Gets all books data
+      description: Returns all books in the store
+      responses:
+        "200":
+          description: An array of book objects
+          content:
+            application/json:
+              examples:
+                books:
+                  value: |-
+                    [
+                        {
+                            "id": 1,
+                            "title": "The Return of the King",
+                            "author": "J.R.R Tolkien",
+                            "num_of_pages": 1567,
+                            "genre": "Fantasy",
+                            "price": "£6.99"
+                        },
+                        {
+                            "id": 2,
+                            "title": "Israel-Palestine",
+                            "author": "Alain Gresh",
+                            "num_of_pages": 300,
+                            "genre": "Non-fiction",
+                            "price": "£8.00"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+      tags:
+        - books
+    post:
+      summary: Creates a new book
+      description: Creates a new book to add into the store
+      requestBody:
+        description: >-
+          A JSON object containing the title, author, num_of_pages, genre and
+          price of a book to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Book"
+      responses:
+        "201":
+          description: The book has been successfully added to the store
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful book creation:
+                  value: Book added!
+        "400":
+          description: Message containing the error stack
+      tags:
+        - books
+  /books/{bookId}:
+    description: Returns a book by its given id
+    get:
+      summary: Returns a book with matching ID
+      description: Returns a book by its given id
+      responses:
+        "200":
+          description: Returns one book object
+          content:
+            application/json:
+              examples:
+                /books/1:
+                  value: |-
+                    [
+                        {
+                            "id": 1,
+                            "title": "The Return of the King",
+                            "author": "J.R.R Tolkien",
+                            "num_of_pages": 1567,
+                            "genre": "Fantasy",
+                            "price": "£6.99"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: No book exists matching that ID
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                "Book id not matching ":
+                  value: Book not found
+        default:
+          description: Default error sample response
+      tags:
+        - books
+    put:
+      summary: Update the price of a book
+      description: This operation updates only the price of a book in the store
+      requestBody:
+        description: A JSON object containing the to-be-updated price of the book
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                price:
+                  type: number
+                  example: 8.99
+              required:
+                - price
+      responses:
+        "200":
+          description: Successful update of the price of a book
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful update:
+                  value: "Book with id 1: price updated"
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: No book in the database matched the given ID
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                No book found with requested ID:
+                  value: Book not found
+      tags:
+        - books
+    delete:
+      summary: Deletes a book with matching ID
+      description: >-
+        Deletes a book from the database permanently whose ID matches the
+        endpoint book ID
+      responses:
+        "204":
+          description: Successful deletion
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful deletion:
+                  value: Book deleted!
+        default:
+          description: Default error sample response
+      tags:
+        - books
+  /users:
+    description: Returns all users
+  /users/{userId}:
+    description: Returns a user given their id
+  /users/register:
+    summary: Creates a user
+    description: Register a user
+  /login:
+    description: Login a user
+  /logout:
+    description: Logout a user
+  /users/{userId}/carts:
+    description: Returns a cart with all orders by given user id
+  /users/{userId}/carts/{cartid}:
+    description: >-
+      Removes a cart, (note that the cart must be empty, in other words, there
+      must be no cart items associated to the cart).
+  /users/{userId}/carts/{cartId}/checkout:
+    description: >-
+      Creates an order from a given user id and cart id, deleted the associated
+      cart and its cart items and finally add the order total to the order
+  /users/{userId}/carts/{cartId}/cart_items/{bookId}:
+    description: "Gets an item from a cart by the user id, cart id and the book id "
+  /users/{userId}/carts/{cartId}/cart_items:
+    description: Create a cart item in a given cart for a given user
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 40
+          example: The Return of the King
+        author:
+          type: string
+          maxLength: 50
+          example: J.R.R Tolkien
+        num_of_pages:
+          type: integer
+          example: 1567
+        genre:
+          type: string
+          maxLength: 25
+          example: Fantasy
+        price:
+          type: number
+          example: 6.99
+      required:
+        - title
+        - author
+        - num_of_pages
+        - genre
+        - price
