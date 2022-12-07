@@ -11,20 +11,8 @@ carts.use(bodyParser.json());
 
 carts.use("/:cartId/cart_items", cart_item);
 
-// Get all carts (EXPAND this to all products from all carts later on!!)
-// carts.get("/", (req, res, next) => {
-//   db.query("SELECT * FROM carts", (error, results) => {
-//     if (error) {
-//       res.status(400).json({ message: error.message });
-//     } else {
-//       res.status(200).json(results.rows);
-//     }
-//   });
-// });
-
-// Gets a cart with all orders by userId (title, author, price, quantity)
+// Gets all carts with all orders for the user (title, author, price, quantity)
 carts.get("/", (req, res, next) => {
-  userId = Number(req.params.userId);
   db.query(
     `SELECT 
         books.title, 
@@ -37,24 +25,22 @@ carts.get("/", (req, res, next) => {
     INNER JOIN books
         ON cart_items.book_id = books.id
     WHERE carts.user_id = $1`,
-    [userId],
+    [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length > 0) {
         res.status(200).json(results.rows);
-      } else {
-        res.status(404).send("User not found!");
       }
     }
   );
 });
 
-// Creates a cart
+// Creates a cart for the user
 carts.post("/", (req, res, next) => {
   db.query(
     "INSERT INTO carts WHERE user_id = $1",
-    [req.params.userId],
+    [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -83,12 +69,13 @@ const isEmpty = (req, res, next) =>
     }
   );
 
-//Remove a cart
+//Remove a cart, only the user's cart
 carts.delete("/:cartId", isEmpty, (req, res, next) => {
   db.query(
     `DELETE FROM carts
-    WHERE id = $1`,
-    [req.params.cartId],
+    WHERE id = $1
+    AND user_id = $2`,
+    [req.params.cartId, req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -124,7 +111,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
   const { cardInfo } = req.body;
   if (true) {
     // Create order as cardinfo is correct
-    orders.createOrder(req.params.userId);
+    orders.createOrder(req.user.id);
 
     const cart_ordersById = await db.query(
       `WITH cart_order AS (
@@ -154,10 +141,10 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
                   price * quantity AS total
                 FROM cart_order
                 ORDER BY book_id`,
-      [req.params.userId, req.params.cartId]
+      [req.user.id, req.params.cartId]
     );
 
-    // Each card order is added into the order_books database for a given userId
+    // Each card order is added into the order_books database for the user
     cart_ordersById.rows.forEach((order) => {
       db.query(
         `INSERT INTO order_books
@@ -170,11 +157,9 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
             // Delete order created above if this is not completely successful for each order
             orders.deleteOrder(order.id);
             res.write(error.stack);
-            res.end();
             return;
           } else {
-            res.write("Cart order added");
-            res.end();
+            res.write("Card order added\n");
             //   Deletes all the cart_items so there will be no duplicates
             db.query(
               `DELETE FROM cart_items
@@ -185,9 +170,8 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
                 if (error) {
                   res.write(error.stack);
                 } else {
-                  res.write("Cart order cleared!");
+                  res.write("Cart order cleared!\n");
                 }
-                res.end();
               }
             );
           }
@@ -203,11 +187,9 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
       (error, results) => {
         if (error) {
           res.write(error.message);
-          res.end();
           return;
         }
-        res.write("Cart deleted");
-        res.end();
+        res.write("Cart deleted\n");
       }
     );
     //   Now final part is adding order total to the order
@@ -228,7 +210,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
             console.log(error.message);
             res.write(error.message);
           } else {
-            res.write("Order made");
+            res.write("Order made\n");
           }
           res.end();
         }

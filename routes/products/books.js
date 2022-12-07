@@ -2,6 +2,7 @@ const express = require("express");
 const books = express.Router();
 const db = require("../../db");
 const bodyParser = require("body-parser");
+const { isAdmin } = require("../../db/helper");
 
 // Get bookId and test if bookId exists in database
 books.param("bookId", (req, res, next, id) => {
@@ -27,9 +28,8 @@ books.use(bodyParser.json());
 
 // Gets all books
 books.get("/", (req, res, next) => {
+  console.log(req.user);
   db.query("SELECT * FROM books ORDER BY id ASC", (error, results) => {
-    console.log(req.session);
-    console.log(req.session.passport.user);
     if (error) {
       res.status(400).send(error.stack);
     } else {
@@ -49,8 +49,8 @@ books.get("/:bookId", (req, res, next) => {
   );
 });
 
-// Creates a new book
-books.post("/", (req, res, next) => {
+// Creates a new book, only admin may do this
+books.post("/", isAdmin, (req, res, next) => {
   const { title, author, num_of_pages, genre, price } = req.body;
 
   db.query(
@@ -67,7 +67,7 @@ books.post("/", (req, res, next) => {
 });
 
 // Updates the price of a book
-books.put("/:bookId", (req, res, next) => {
+books.put("/:bookId", isAdmin, (req, res, next) => {
   const { price } = req.body;
   db.query(
     "UPDATE books SET price = $1 WHERE id = $2",
@@ -79,7 +79,7 @@ books.put("/:bookId", (req, res, next) => {
 });
 
 // Deletes a book by its bookId
-books.delete("/:bookId", (req, res, next) => {
+books.delete("/:bookId", isAdmin, (req, res, next) => {
   db.query(
     "DELETE FROM books WHERE id = $1",
     [req.bookIndex],

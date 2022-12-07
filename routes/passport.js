@@ -10,13 +10,12 @@ module.exports = (passport, db) => {
 
   passport.deserializeUser((id, done) => {
     db.query(
-      "SELECT id, username FROM users WHERE id = $1",
+      "SELECT id, username, isadmin FROM users WHERE id = $1",
       [id],
       (error, results) => {
         if (error) {
           return done(error);
         } else {
-          console.log(results.rows[0]);
           return done(null, results.rows[0]);
         }
       }
@@ -38,6 +37,7 @@ module.exports = (passport, db) => {
                 done(null, {
                   id: data.id,
                   username: data.username,
+                  isadmin: data.isadmin,
                 });
               } else {
                 done(null, false, { message: "Password is incorrect!" });

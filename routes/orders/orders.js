@@ -1,13 +1,22 @@
+const e = require("express");
 const express = require("express");
 const db = require("../../db");
 const orders = express.Router();
 
-// Select all orders by userId
+// Select all orders for the user
 orders.get("/", (req, res, next) => {
-  const { userId } = req.user.id;
   db.query(
-    "SELECT * FROM orders where user_id = $1",
-    [userId],
+    `SELECT  
+      orders.id,
+      users.username,
+      users.email,
+      orders.order_total,
+      orders.created_at
+    FROM orders
+    INNER JOIN users
+    ON orders.user_id = users.id
+    WHERE user_id = $1`,
+    [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -18,19 +27,20 @@ orders.get("/", (req, res, next) => {
   );
 });
 
-// Select all orders by orderId and userId
+// Select an order for the user by orderId
 orders.get("/:orderId", (req, res, next) => {
-  const { userId } = req.user.id;
   db.query(
     `SELECT * FROM orders 
     WHERE user_id = $1
     AND id = $2`,
-    [userId, req.params.orderId],
+    [req.user.id, req.params.orderId],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
-      } else {
+      } else if (results.rows.length) {
         res.status(200).json(results.rows);
+      } else {
+        res.status(404).send("No order found!");
       }
     }
   );

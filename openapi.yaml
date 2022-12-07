@@ -6,8 +6,20 @@ info:
 tags:
   - name: books
     description: All the products routes of the demo online store
-  - name: Users
-    description: Indicates all non-product routes in the API
+  - name: users
+    description: All routes concerned with users in the API
+  - name: carts
+    description: All routes concerned with the online carts in the store
+  - name: cart_items
+    description: All routes concerned with items within the carts of the users
+  - name: orders
+    description: All routes concerened with the orders archive of a store
+  - name: admin
+    description: All routes which require admin access
+  - name: login
+    description: Login route
+  - name: logout
+    description: Logout route
 paths:
   /books:
     description: Returns all books
@@ -45,7 +57,7 @@ paths:
       tags:
         - books
     post:
-      summary: Creates a new book
+      summary: Creates a new book (admin only)
       description: Creates a new book to add into the store
       requestBody:
         description: >-
@@ -68,10 +80,18 @@ paths:
           description: Message containing the error stack
       tags:
         - books
+        - admin
   /books/{bookId}:
     description: Returns a book by its given id
     get:
       summary: Returns a book with matching ID
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to get
       description: Returns a book by its given id
       responses:
         "200":
@@ -105,7 +125,14 @@ paths:
       tags:
         - books
     put:
-      summary: Update the price of a book
+      summary: Update the price of a book (admin only)
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to put
       description: This operation updates only the price of a book in the store
       requestBody:
         description: A JSON object containing the to-be-updated price of the book
@@ -139,8 +166,16 @@ paths:
                   value: Book not found
       tags:
         - books
+        - admin
     delete:
-      summary: Deletes a book with matching ID
+      summary: Deletes a book with matching ID (admin only)
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to delete
       description: >-
         Deletes a book from the database permanently whose ID matches the
         endpoint book ID
@@ -156,31 +191,514 @@ paths:
           description: Default error sample response
       tags:
         - books
-  /users:
+        - admin
+  /users/all:
     description: Returns all users
-  /users/{userId}:
-    description: Returns a user given their id
+    get:
+      summary: Gets all users data (admin only)
+      description: Returns an array of all the users on the system
+      responses:
+        "200":
+          description: Successful retrieval of users data
+          content:
+            application/json:
+              examples:
+                /users:
+                  value: |-
+                    [
+                        {
+                            "id": 1,
+                            "username": "Guest",
+                            "password": "$2b$10$MVv2fdnUR2xsSBpgDgLGiuXvDgMjbpBa.4hPy/0rT9SUq1f60LdMq",
+                            "email": "guest@gmail.com",
+                            "isadmin": "true"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+      tags:
+        - users
+        - admin
+  /users:
+    get:
+      summary: Returns the user's data
+      description: Returns the user object for logged in user
+      responses:
+        "200":
+          description: Successful retrieval of user object
+          content:
+            application/json:
+              examples:
+                /users:
+                  value: |-
+                    [
+                        {
+                            "id": 1,
+                            "username": "Guest",
+                            "password": "$2b$10$MVv2fdnUR2xsSBpgDgLGiuXvDgMjbpBa.4hPy/0rT9SUq1f60LdMq",
+                            "email": "guest@gmail.com",
+                            "isadmin": "true"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+      tags:
+        - users
+    put:
+      summary: Updates username and password for loggedIn user
+      description: Allows a user to update their username and their password
+      requestBody:
+        description: A JSON object containing the new username and password of the user
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: billJohnson1
+                password:
+                  type: string
+                  example: password1
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: Successful update
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                /user:
+                  value: You've updated your username and password!
+        "400":
+          description: Message containing the error stack
+      tags:
+        - users
   /users/register:
     summary: Creates a user
     description: Register a user
+    post:
+      summary: Register a new user
+      description: >-
+        Register a new user with a username, password (to be encrypted), and
+        email, isadmin is default false
+      requestBody:
+        description: >-
+          A JSON object containing the username, password and email of a user to
+          be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: Successful registration
+          content:
+            application/json:
+              examples:
+                users/register:
+                  value: Your registration was successful!
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: User with the given email already exists
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Email already exists:
+                  value: User with that email already exists!
+      tags:
+        - users
   /login:
     description: Login a user
+    post:
+      summary: Login the user
+      description: Asks the user to provide a username and password with which to login
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              examples:
+                Successful login:
+                  value: |-
+                    {
+                        "id": 1,
+                        "username": "Guest",
+                        "isadmin": true
+                    }
+        "400":
+          description: Default error sample response
+        "401":
+          description: >-
+            The first example indicates an incorrect username and the second, an
+            incorrect password
+          content:
+            application/json:
+              examples:
+                Username is incorrect:
+                  value: |-
+                    {
+                      "error": "No user with that username!"
+                    }
+                Password is incorrect:
+                  value: |-
+                    {
+                        "error": "Password is incorrect!"
+                    }
+      tags:
+        - login
   /logout:
     description: Logout a user
-  /users/{userId}/carts:
-    description: Returns a cart with all orders by given user id
-  /users/{userId}/carts/{cartid}:
+    get:
+      summary: Logout a user
+      description: Logout a user
+      responses:
+        "200":
+          description: Successful logout
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful logout:
+                  value: User is logged out
+        default:
+          description: Default error sample response
+      tags:
+        - logout
+  /users/carts:
+    description: Returns all carts belonging to the loggedIn user
+    get:
+      summary: Gets all cart with all its items belonging to the loggedIn user
+      description: >-
+        Returns a cart with all its items, alongside their title, price, author
+        and quantity
+      responses:
+        "200":
+          description: Successful retrieval of a cart
+          content:
+            application/json:
+              examples:
+                Successful retrieval of a cart:
+                  value: |-
+                    [
+                        {
+                            "title": "Israel-Palestine",
+                            "author": "Alain Gresh",
+                            "price": "£8.00",
+                            "quantity": 3
+                        },
+                        {
+                            "title": "The Return of the King",
+                            "author": "J.R.R Tolkien",
+                            "price": "£6.99",
+                            "quantity": 2
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: USer id doesn't match any user in the database
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                User not found (invalid user ID):
+                  value: User not found
+      tags:
+        - carts
+    post:
+      summary: Creates a cart for the loggedIn user
+      description: Creates a cart for the loggedIn user
+      responses:
+        "201":
+          description: Successful creation of a cart
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful creation of a cart:
+                  value: Cart created
+        "400":
+          description: Message containing the error stack
+      tags:
+        - carts
+  /users/carts/{cartId}:
     description: >-
       Removes a cart, (note that the cart must be empty, in other words, there
       must be no cart items associated to the cart).
-  /users/{userId}/carts/{cartId}/checkout:
+    delete:
+      summary: Delete a cart, if empty, belonging to the loggedIn user
+      parameters:
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the cart to delete
+      description: >-
+        Deletes a cart but also checks if said cart is empty, if not a warning
+        will be sent
+      responses:
+        "204":
+          description: Cart successfully deleted
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful deletion:
+                  value: Cart deleted!
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: The cart has cart items associated to it
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Cart is not empty:
+                  value: The cart needs to be empty first!
+      tags:
+        - carts
+  /users/carts/{cartId}/checkout:
     description: >-
-      Creates an order from a given user id and cart id, deleted the associated
-      cart and its cart items and finally add the order total to the order
-  /users/{userId}/carts/{cartId}/cart_items/{bookId}:
+      Creates an order from the loggedIn user and a cart id, deletes the
+      associated cart and its cart items and finally adds the order total to the
+      order
+    post:
+      summary: Checkout a cart for the loggedIn user
+      parameters:
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the cart to post
+      description: >-
+        This endpoint creates an order, fills it with each of the cart items
+        associated to the user Id and cart ID then deletes said items as well as
+        the cart. Finally, it calculates the order total and adds it to the
+        order
+      responses:
+        "200":
+          description: Successful checkout
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful checkout with 2 items in the cart:
+                  value: |
+                    Card order added
+                    Card order added
+                    Cart order cleared!
+                    Cart order cleared!
+                    Cart deleted
+                    Order made
+        "400":
+          description: Message containing error stack
+      tags:
+        - carts
+  /users/carts/{cartId}/cart_items/{bookId}:
     description: "Gets an item from a cart by the user id, cart id and the book id "
-  /users/{userId}/carts/{cartId}/cart_items:
-    description: Create a cart item in a given cart for a given user
+    get:
+      summary: Get a cart item by the loggedIn user alongside the cart and book IDs
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to get
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the cart to get
+      description: >-
+        Gives a cart item which matches, if possible, the given user, cart and
+        book IDs with the book's title, author, price and quantity within the
+        cart
+      responses:
+        "200":
+          description: Succcesful retrivel of a cart item
+          content:
+            application/json:
+              examples:
+                Successful retrieval:
+                  value: |-
+                    [
+                        {
+                            "title": "The Return of the King",
+                            "author": "J.R.R Tolkien",
+                            "price": "£6.99",
+                            "quantity": 2
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: At least one of the IDs has not matched with a data entry
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                At least one of the IDs doesn't match a corresponding entry in the database:
+                  value: Cart item not found
+      tags:
+        - cart_items
+    put:
+      summary: Update the quantity of a given cart item for a user
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to put
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the  cart to put
+      description: Updates the quantity of a cart item whose cart matches the given ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity:
+                  type: integer
+                  example: 3
+                  minimum: 1
+      responses:
+        "200":
+          description: Successful update of the quantity of a card order
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful update of a cart item:
+                  value: Cart order updated!
+        "400":
+          description: Message containing the error stack
+        "404":
+          description: No book matching given ID within the cart's items
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Book not found within a cart's items:
+                  value: Book not found
+      tags:
+        - cart_items
+    delete:
+      summary: Remove a cart item belonging to the loggedIn user
+      parameters:
+        - in: path
+          name: bookId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the book to delete
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the cart to delete
+      description: Delete a cart item from a given cart
+      responses:
+        "204":
+          description: Successful deletion of a cart item
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful deletion of a cart_item:
+                  value: "''"
+        "400":
+          description: Message containing the error stack
+      tags:
+        - cart_items
+  /users/carts/{cartId}/cart_items:
+    description: Create a cart item in a given cart for the loggedIn user
+    post:
+      summary: Creates a cart item within a given cart for the loggedIn user
+      parameters:
+        - in: path
+          name: cartId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the cart to post
+      description: Creates a cart item in a cart matching the relevant IDs
+      responses:
+        "201":
+          description: Successful creation of a cart item
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Successful creation of a cart item:
+                  value: Added to cart!
+        "400":
+          description: Message containing the error stack
+      tags:
+        - cart_items
+  /orders:
+    summary: One of the orders endpoints
+    get:
+      summary: Retrieves all of a user's orders
+      description: Returns all the orders for a given user
+      responses:
+        "200":
+          description: Successful retrieval of orders
+          content:
+            application/json:
+              examples:
+                Successful retrieval of orders:
+                  value: |-
+                    [
+                        {
+                            "id": 79,
+                            "username": "Guest",
+                            "email": "guest@gmail.com",
+                            "order_total": "£99.96",
+                            "created_at": "2022-12-06T14:38:52.058Z"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+      tags:
+        - orders
+  /orders/{orderId}:
+    summary: Order ID specific endpoints
+    get:
+      summary: Select a specific order for a user
+      parameters:
+        - in: path
+          name: orderId
+          schema:
+            type: integer
+          required: true
+          description: Numeric ID of the order to get
+      description: Return an order which matches the given ID
+      responses:
+        "200":
+          description: Successful retrieval of an order
+          content:
+            application/json:
+              examples:
+                Successful retrieval of an order (id 79):
+                  value: |-
+                    [
+                        {
+                            "id": 79,
+                            "user_id": 1,
+                            "created_at": "2022-12-06T14:38:52.058Z",
+                            "order_total": "£99.96"
+                        }
+                    ]
+        "400":
+          description: Message containing the error stack
+      tags:
+        - orders
 components:
   schemas:
     Book:
@@ -210,3 +728,24 @@ components:
         - num_of_pages
         - genre
         - price
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 20
+          example: Guest
+        password:
+          type: string
+          example: password
+        email:
+          type: string
+          example: guest@gmail.com
+        isadmin:
+          type: boolean
+          example: true
+      required:
+        - username
+        - password
+        - email
+        - isadmin

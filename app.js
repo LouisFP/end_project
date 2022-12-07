@@ -5,11 +5,13 @@ const passport = require("passport");
 const session = require("express-session");
 const logger = require("morgan");
 const cors = require("cors");
+const flash = require("connect-flash");
 
 const { v4: uuidv4 } = require("uuid");
 const PORT = process.env.PORT || 3000;
 
 // Express routing imports
+const { isLoggedIn } = require("./db/helper.js");
 const books = require("./routes/products/books");
 const users = require("./routes/users/users");
 const orders = require("./routes/orders/orders");
@@ -41,24 +43,37 @@ app.use(
   })
 );
 
-// Express routing
-require("./routes/passport")(passport, db);
-app.use("/books", books);
-app.use("/users", users);
-app.use("/orders", orders.orders);
-
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Express routing
+require("./routes/passport")(passport, db);
+app.use("/books", isLoggedIn, books);
+app.use("/users", isLoggedIn, users);
+app.use("/orders", isLoggedIn, orders.orders);
+
 // Log in User
-app.post("/login", passport.authenticate("local"), (req, res) => {
-  console.log("Logging in");
-  req.logIn(req.user, (err) => {
-    if (err) {
-      return next(err);
-    }
-    res.send(req.user);
-  });
+app.post(
+  "/login",
+  passport.authenticate("local", {
+    failureRedirect: "/login",
+    failureFlash: true,
+  }),
+  (req, res) => {
+    req.logIn(req.user, (err) => {
+      if (err) {
+        return next(err);
+      }
+      res.send(req.user);
+    });
+  }
+);
+
+app.get("/login", (req, res, next) => {
+  let flashLength = req.session.flash.error.length;
+  let latestError = { error: req.session.flash.error[flashLength - 1] };
+  res.status(401).send(latestError);
 });
 
 // Log out User
@@ -66,7 +81,7 @@ app.get("/logout", (req, res, next) => {
   req.logout((err) => {
     return next(err);
   });
-  res.send("User is logged out!");
+  res.status(200).send("User is logged out!");
 });
 
 app.listen(PORT, () => {

@@ -21,9 +21,9 @@ cart_items.param("bookId", (req, res, next, id) => {
   );
 });
 
-// Get a cartItem by userId, cartId and bookId
+// Get a cartItem for a user by cartId and bookId
 cart_items.get("/:bookId", (req, res, next) => {
-  const { userId, cartId } = req.params;
+  const { cartId } = req.params;
   db.query(
     `SELECT 
 	    books.title,
@@ -38,7 +38,7 @@ cart_items.get("/:bookId", (req, res, next) => {
     WHERE carts.user_id = $1
     AND cart_items.book_id = $2
     AND cart_items.cart_id = $3`,
-    [userId, req.params.bookId, cartId],
+    [req.user.id, req.params.bookId, cartId],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -51,7 +51,7 @@ cart_items.get("/:bookId", (req, res, next) => {
   );
 });
 
-// Create a cart_items
+// Create a cart_item
 cart_items.post("/", (req, res, next) => {
   const { bookId, quantity } = req.body;
   db.query(

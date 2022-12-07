@@ -5,38 +5,14 @@ const bcrypt = require("bcrypt");
 const db = require("../../db");
 const bodyParser = require("body-parser");
 const carts = require("../carts/carts");
-////////////////////////////////////////////////////////
-// Need to ensure authentication                      //
-// ie for get all users must be an admin              //
-// for get users by userId must be that specific user //
-// and so on                                          //
-////////////////////////////////////////////////////////
+const { isAdmin } = require("../../db/helper");
 
 users.use(bodyParser.urlencoded({ extended: true }));
 
-// Gets userId params
-users.param("userId", (req, res, next, id) => {
-  const idToFind = Number(id);
-  db.query(
-    "SELECT * FROM users WHERE id = $1",
-    [idToFind],
-    (error, results) => {
-      if (error) {
-        res.status(400).send(error.stack);
-      } else if (results.rows.length === 0) {
-        res.status(404).send("User not found");
-      } else {
-        req.bookIndex = results.rows[0].id;
-        next();
-      }
-    }
-  );
-});
+users.use("/carts", carts);
 
-users.use("/:userId/carts", carts);
-
-// Get all users (add in only if admin)
-users.get("/", (req, res, next) => {
+// Get all users
+users.get("/all", isAdmin, async (req, res, next) => {
   db.query("SELECT * FROM users", (error, results) => {
     if (error) {
       res.status(400).send(error.stack);
@@ -46,33 +22,31 @@ users.get("/", (req, res, next) => {
   });
 });
 
-// Gets a user by their userId
-users.get("/:userId", (req, res, next) => {
+// Gets a user's details and only their details
+users.get("/", (req, res, next) => {
   db.query(
     `SELECT * FROM users WHERE id = $1`,
-    [req.bookIndex],
+    [req.user.id],
     (error, results) => {
       res.status(200).json(results.rows);
     }
   );
 });
 
-// Update the username and password
-users.put("/:userId", (req, res, next) => {
+// Update the username and password of the user's details
+users.put("/", async (req, res, next) => {
   const { username, password } = req.body;
-
+  // Encrypt the new password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
   db.query(
     "UPDATE users SET username = $2, password = $3 WHERE id = $1",
-    [req.bookIndex, username, password],
+    [req.user.id, username, hashedPassword],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
-        res
-          .status(200)
-          .send(
-            `User with id ${req.bookIndex}: username and password updated!`
-          );
+        res.status(200).send(`You've updated your username and password!`);
       }
     }
   );
@@ -90,12 +64,11 @@ users.post("/register", async (req, res, next) => {
         throw error;
       }
       if (results.rows.length > 0) {
-        res.status(400).send("User with that email already exists!");
+        res.status(404).send("User with that email already exists!");
         return next();
       } else {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        console.log(hashedPassword.length);
         db.query(
           "INSERT INTO users (username, password, email) VALUES ($1, $2, $3)",
           [username, hashedPassword, email],
@@ -113,13 +86,5 @@ users.post("/register", async (req, res, next) => {
     }
   );
 });
-
-// users.get("/register", (req, res) => {
-//   res.render("/register");
-// });
-
-// users.get("/login", (req, res) => {
-//   res.render("/login");
-// });
 
 module.exports = users;
