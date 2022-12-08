@@ -22,6 +22,7 @@
     "flash": "^1.1.0",
     "git-filter-repo": "^0.0.30",
     "index.js": "^0.0.3",
+    "livereload": "^0.9.3",
     "morgan": "^1.10.0",
     "passport": "^0.6.0",
     "passport-local": "^1.0.0",
