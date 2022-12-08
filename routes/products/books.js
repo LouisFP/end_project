@@ -4,6 +4,29 @@ const db = require("../../db");
 const bodyParser = require("body-parser");
 const { isAdmin } = require("../../db/helper");
 
+// Important: check that book has no cart_items connected to it before deleting
+const hasCartItems = (req, res, next) => {
+  const idToSearch = req.params.bookId;
+  db.query(
+    `SELECT
+      *
+    FROM cart_items
+    WHERE book_id = $1`,
+    [idToSearch],
+    (error, results) => {
+      console.log(results.rows.length);
+      if (error) {
+        res.status(400).send(error.stack);
+      } else if (results.rows.length) {
+        res.status(400).send("This book is in someone's cart!");
+      } else {
+        console.log("All good, passes the test!");
+        next();
+      }
+    }
+  );
+};
+
 // Get bookId and test if bookId exists in database
 books.param("bookId", (req, res, next, id) => {
   const idToFind = Number(id);
@@ -79,7 +102,7 @@ books.put("/:bookId", isAdmin, (req, res, next) => {
 });
 
 // Deletes a book by its bookId
-books.delete("/:bookId", isAdmin, (req, res, next) => {
+books.delete("/:bookId", isAdmin, hasCartItems, (req, res, next) => {
   db.query(
     "DELETE FROM books WHERE id = $1",
     [req.bookIndex],

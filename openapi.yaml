@@ -187,8 +187,15 @@ paths:
               examples:
                 Successful deletion:
                   value: Book deleted!
-        default:
-          description: Default error sample response
+        "400":
+          description: Error message
+          content:
+            text/plain; charset=utf-8:
+              examples:
+                Book is in someone's cart:
+                  value: This book is in someone's cart!
+          default responses:
+            description: Message containing the error stack
       tags:
         - books
         - admin
