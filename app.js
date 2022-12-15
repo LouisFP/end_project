@@ -6,6 +6,7 @@ const session = require("express-session");
 const logger = require("morgan");
 const cors = require("cors");
 const flash = require("connect-flash");
+const helmet = require("helmet");
 
 const { v4: uuidv4 } = require("uuid");
 const PORT = process.env.PORT || 3000;
@@ -43,6 +44,7 @@ app.use(
   })
 );
 
+app.use(helmet());
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -63,14 +65,14 @@ app.post(
   (req, res) => {
     req.logIn(req.user, (err) => {
       if (err) {
-        return next(err);
+        return res.json({ error: err });
       }
       res.send(req.user);
     });
   }
 );
 
-app.get("/login", (req, res, next) => {
+app.get("/login", (req, res) => {
   let flashLength = req.session.flash.error.length;
   let latestError = { error: req.session.flash.error[flashLength - 1] };
   res.status(401).send(latestError);

@@ -1,7 +1,5 @@
-const express = require("express");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
-const db = require("../db");
 
 module.exports = (passport, db) => {
   passport.serializeUser((user, done) => {
