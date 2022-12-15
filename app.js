@@ -7,6 +7,7 @@ const logger = require("morgan");
 const cors = require("cors");
 const flash = require("connect-flash");
 const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
 
 const { v4: uuidv4 } = require("uuid");
 const PORT = process.env.PORT || 3000;
@@ -33,16 +34,27 @@ app.use(connectLiveReload());
 app.set("trust proxy", 1);
 app.use(cors());
 app.use(logger("dev"));
+app.use(cookieParser());
 app.use(bodyParser.json());
 
 app.use(
   session({
     secret: uuidv4(),
-    cookie: { maxAge: 60 * 60 * 24 * 1000, secure: false, sameSite: "none" },
+    cookie: { maxAge: 60 * 60 * 24 * 1000, secure: true, sameSite: "none" },
     resave: false,
     saveUninitialized: false,
   })
 );
+
+// Rate limiting
+const rateLimit = require("express-rate-limit");
+
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 5,
+});
+
+app.use(limiter);
 
 app.use(helmet());
 app.use(flash());
