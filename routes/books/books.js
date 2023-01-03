@@ -50,7 +50,7 @@ books.param("bookId", (req, res, next, id) => {
 books.use(bodyParser.json());
 
 // Gets all books
-books.get("/", (req, res, next) => {
+books.get("/", (req, res) => {
   console.log(req.user);
   db.query("SELECT * FROM books ORDER BY id ASC", (error, results) => {
     if (error) {
@@ -62,7 +62,7 @@ books.get("/", (req, res, next) => {
 });
 
 // Gets books by bookId
-books.get("/:bookId", (req, res, next) => {
+books.get("/:bookId", (req, res) => {
   db.query(
     "SELECT * FROM books WHERE id = $1",
     [req.bookIndex],
@@ -73,13 +73,13 @@ books.get("/:bookId", (req, res, next) => {
 });
 
 // Creates a new book, only admin may do this
-books.post("/", isAdmin, (req, res, next) => {
+books.post("/", isAdmin, (req, res) => {
   const { title, author, num_of_pages, genre, price } = req.body;
 
   db.query(
     "INSERT INTO books (title, author, num_of_pages, genre, price) VALUES ($1, $2, $3, $4, $5)",
     [title, author, num_of_pages, genre, price],
-    (error, results) => {
+    (error) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
@@ -90,26 +90,22 @@ books.post("/", isAdmin, (req, res, next) => {
 });
 
 // Updates the price of a book
-books.put("/:bookId", isAdmin, (req, res, next) => {
+books.put("/:bookId", isAdmin, (req, res) => {
   const { price } = req.body;
   db.query(
     "UPDATE books SET price = $1 WHERE id = $2",
     [price, req.bookIndex],
-    (error, results) => {
+    () => {
       res.status(200).send(`Book with id ${req.bookIndex}: price updated!`);
     }
   );
 });
 
 // Deletes a book by its bookId
-books.delete("/:bookId", isAdmin, hasCartItems, (req, res, next) => {
-  db.query(
-    "DELETE FROM books WHERE id = $1",
-    [req.bookIndex],
-    (error, results) => {
-      res.status(204).send(`Book deleted!`);
-    }
-  );
+books.delete("/:bookId", isAdmin, hasCartItems, (req, res) => {
+  db.query("DELETE FROM books WHERE id = $1", [req.bookIndex], () => {
+    res.status(204).send(`Book deleted!`);
+  });
 });
 
 module.exports = books;

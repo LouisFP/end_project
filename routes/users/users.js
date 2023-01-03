@@ -1,6 +1,5 @@
 const express = require("express");
 const users = express.Router();
-const passport = require("passport");
 const bcrypt = require("bcrypt");
 const db = require("../../db");
 const bodyParser = require("body-parser");
@@ -12,7 +11,7 @@ users.use(bodyParser.urlencoded({ extended: true }));
 users.use("/carts", carts);
 
 // Get all users
-users.get("/all", isAdmin, async (req, res, next) => {
+users.get("/all", isAdmin, async (req, res) => {
   db.query("SELECT * FROM users", (error, results) => {
     if (error) {
       res.status(400).send(error.stack);
@@ -23,7 +22,7 @@ users.get("/all", isAdmin, async (req, res, next) => {
 });
 
 // Gets a user's details and only their details
-users.get("/", (req, res, next) => {
+users.get("/", (req, res) => {
   db.query(
     `SELECT * FROM users WHERE id = $1`,
     [req.user.id],
@@ -34,7 +33,7 @@ users.get("/", (req, res, next) => {
 });
 
 // Update the username and password of the user's details
-users.put("/", async (req, res, next) => {
+users.put("/", async (req, res) => {
   const { username, password } = req.body;
   // Encrypt the new password
   const salt = await bcrypt.genSalt(10);
@@ -42,7 +41,7 @@ users.put("/", async (req, res, next) => {
   db.query(
     "UPDATE users SET username = $2, password = $3 WHERE id = $1",
     [req.user.id, username, hashedPassword],
-    (error, results) => {
+    (error) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
@@ -72,7 +71,7 @@ users.post("/register", async (req, res, next) => {
         db.query(
           "INSERT INTO users (username, password, email) VALUES ($1, $2, $3)",
           [username, hashedPassword, email],
-          (error, results) => {
+          (error) => {
             if (error) {
               res.status(400).send(error.stack);
             } else {

@@ -2,7 +2,6 @@ const express = require("express");
 const db = require("../../db");
 const bodyParser = require("body-parser");
 const cart_item = require("../cart_items/cart_items");
-const e = require("express");
 const orders = require("../orders/orders");
 
 const carts = express.Router({ mergeParams: true });
@@ -12,7 +11,7 @@ carts.use(bodyParser.json());
 carts.use("/:cartId/cart_items", cart_item);
 
 // Gets all carts with all orders for the user (title, author, price, quantity)
-carts.get("/", (req, res, next) => {
+carts.get("/", (req, res) => {
   db.query(
     `SELECT 
         books.title, 
@@ -36,19 +35,36 @@ carts.get("/", (req, res, next) => {
   );
 });
 
-// Creates a cart for the user
-carts.post("/", (req, res, next) => {
+// Check to see if a user already has a cart
+const hasCart = (req, res, next) => {
   db.query(
-    "INSERT INTO carts WHERE user_id = $1",
+    `SELECT 
+      * 
+    FROM carts
+    WHERE user_id = $1`,
     [req.user.id],
     (error, results) => {
       if (error) {
-        res.status(400).send(error.stack);
+        res.status(400).send(error.message);
+      }
+      if (results.rows.length) {
+        res.send("You already have a cart!");
       } else {
-        res.status(201).send("Cart created");
+        next();
       }
     }
   );
+};
+
+// Creates a cart for the user
+carts.post("/", hasCart, (req, res) => {
+  db.query("INSERT INTO carts WHERE user_id = $1", [req.user.id], (error) => {
+    if (error) {
+      res.status(400).send(error.stack);
+    } else {
+      res.status(201).send("Cart created");
+    }
+  });
 });
 
 // Check if cart is empty first (no cart_items)
@@ -59,7 +75,6 @@ const isEmpty = (req, res, next) =>
     [req.params.cartId],
     (error, results) => {
       if (error) {
-        console.log(results.rows.length);
         res.status(400).send(error.stack);
       } else if (results.rows.length) {
         res.send("The cart needs to be empty first!");
@@ -70,13 +85,13 @@ const isEmpty = (req, res, next) =>
   );
 
 //Remove a cart, only the user's cart
-carts.delete("/:cartId", isEmpty, (req, res, next) => {
+carts.delete("/:cartId", isEmpty, (req, res) => {
   db.query(
     `DELETE FROM carts
     WHERE id = $1
     AND user_id = $2`,
     [req.params.cartId, req.user.id],
-    (error, results) => {
+    (error) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
@@ -107,8 +122,8 @@ const checkCartExistence = (req, res, next) => {
 };
 
 // Checkpoint endpoint, validate if cart is empty, check payment credentials and add order if successful
-carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
-  const { cardInfo } = req.body;
+carts.post("/:cartId/checkout", checkCartExistence, async (req, res) => {
+  // const { cardInfo } = req.body; ADD IN STRIPE
   if (true) {
     // Create order as cardinfo is correct
     orders.createOrder(req.user.id);
@@ -152,7 +167,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
             VALUES ($1, $2, $3, $4)
             RETURNING *`,
         [order.id, order.book_id, order.quantity, order.total],
-        (error, results) => {
+        (error) => {
           if (error) {
             // Delete order created above if this is not completely successful for each order
             orders.deleteOrder(order.id);
@@ -166,7 +181,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
                 WHERE cart_id = $1
                 AND book_id = $2`,
               [req.params.cartId, order.book_id],
-              (error, results) => {
+              (error) => {
                 if (error) {
                   res.write(error.stack);
                 } else {
@@ -184,7 +199,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
       `DELETE FROM carts
         WHERE id = $1`,
       [req.params.cartId],
-      (error, results) => {
+      (error) => {
         if (error) {
           res.write(error.message);
           return;
@@ -205,7 +220,7 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res, next) => {
           SET order_total = $1
           WHERE id = $2`,
         [result.rows[0].sum, cart_ordersById.rows[0].id],
-        (error, results) => {
+        (error) => {
           if (error) {
             console.log(error.message);
             res.write(error.message);

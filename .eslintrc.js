@@ -12,5 +12,7 @@ module.exports = {
   rules: {
     semi: "warn",
     eqeqeq: ["warn"],
+    "no-unused-vars": "warn",
+    "no-constant-condition": "none",
   },
 };
