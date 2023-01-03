@@ -8,9 +8,9 @@ const carts = express.Router({ mergeParams: true });
 
 carts.use(bodyParser.json());
 
-carts.use("/:cartId/cart_items", cart_item);
+carts.use("/cart_items", cart_item);
 
-// Gets all carts with all orders for the user (title, author, price, quantity)
+// Gets a user's cart (title, author, price, quantity)
 carts.get("/", (req, res) => {
   db.query(
     `SELECT 
@@ -20,7 +20,7 @@ carts.get("/", (req, res) => {
         cart_items.quantity 
     FROM carts
     INNER JOIN cart_items
-        ON carts.id = cart_items.cart_id
+        ON carts.user_id = cart_items.user_id
     INNER JOIN books
         ON cart_items.book_id = books.id
     WHERE carts.user_id = $1`,
@@ -85,12 +85,11 @@ const isEmpty = (req, res, next) =>
   );
 
 //Remove a cart, only the user's cart
-carts.delete("/:cartId", isEmpty, (req, res) => {
+carts.delete("/", isEmpty, (req, res) => {
   db.query(
     `DELETE FROM carts
-    WHERE id = $1
-    AND user_id = $2`,
-    [req.params.cartId, req.user.id],
+    WHERE user_id = $1`,
+    [req.user.id],
     (error) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -107,8 +106,8 @@ const checkCartExistence = (req, res, next) => {
     `SELECT 
       * 
     FROM cart_items
-    WHERE cart_id = $1`,
-    [req.params.cartId],
+    WHERE user_id = $1`,
+    [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -122,7 +121,7 @@ const checkCartExistence = (req, res, next) => {
 };
 
 // Checkpoint endpoint, validate if cart is empty, check payment credentials and add order if successful
-carts.post("/:cartId/checkout", checkCartExistence, async (req, res) => {
+carts.post("/checkout", checkCartExistence, async (req, res) => {
   // const { cardInfo } = req.body; ADD IN STRIPE
   if (true) {
     // Create order as cardinfo is correct
@@ -130,33 +129,30 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res) => {
 
     const cart_ordersById = await db.query(
       `WITH cart_order AS (
-              SELECT
-                    orders.id AS id,
-                    books.title AS title,
-                    books.author AS author,
-                    books.price as price,
-                    cart_items.quantity AS quantity,
-                    cart_items.book_id AS book_id
-                FROM carts
-                INNER JOIN cart_items
-                    ON carts.id = cart_items.cart_id
-                INNER JOIN books
-                    ON cart_items.book_id = books.id
-                INNER JOIN users
-                    ON carts.user_id = users.id
-                INNER JOIN orders
-                    ON orders.user_id = users.id
-                 WHERE carts.user_id = $1
-                 AND cart_items.cart_id = $2
-                )
-                SELECT
-                  id,
-                  book_id,
-                  quantity,
-                  price * quantity AS total
-                FROM cart_order
-                ORDER BY book_id`,
-      [req.user.id, req.params.cartId]
+        SELECT
+              orders.id AS id,
+              books.title AS title,
+              books.author AS author,
+              books.price as price,
+              cart_items.quantity AS quantity,
+              cart_items.book_id AS book_id
+          FROM cart_items
+          INNER JOIN books
+              ON cart_items.book_id = books.id
+          INNER JOIN users
+              ON cart_items.user_id = users.id
+          INNER JOIN orders
+              ON orders.user_id = users.id
+           WHERE cart_items.user_id = $1
+          )
+          SELECT
+            id,
+            book_id,
+            quantity,
+            price * quantity AS total
+          FROM cart_order
+          ORDER BY book_id`,
+      [req.user.id]
     );
 
     // Each card order is added into the order_books database for the user
@@ -178,9 +174,9 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res) => {
             //   Deletes all the cart_items so there will be no duplicates
             db.query(
               `DELETE FROM cart_items
-                WHERE cart_id = $1
+                WHERE user_id = $1
                 AND book_id = $2`,
-              [req.params.cartId, order.book_id],
+              [req.user.id, order.book_id],
               (error) => {
                 if (error) {
                   res.write(error.stack);
@@ -197,8 +193,8 @@ carts.post("/:cartId/checkout", checkCartExistence, async (req, res) => {
     //   above then cart won't be empty and an error will be thrown here
     db.query(
       `DELETE FROM carts
-        WHERE id = $1`,
-      [req.params.cartId],
+        WHERE user_id = $1`,
+      [req.user.id],
       (error) => {
         if (error) {
           res.write(error.message);

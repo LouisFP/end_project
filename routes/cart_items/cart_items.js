@@ -23,7 +23,6 @@ cart_items.param("bookId", (req, res, next, id) => {
 
 // Get a cartItem for a user by cartId and bookId
 cart_items.get("/:bookId", (req, res, next) => {
-  const { cartId } = req.params;
   db.query(
     `SELECT 
 	    books.title,
@@ -32,13 +31,12 @@ cart_items.get("/:bookId", (req, res, next) => {
         cart_items.quantity
     FROM carts
     INNER JOIN cart_items
-        ON carts.id = cart_items.cart_id
+        ON carts.user_id = cart_items.user_id
     INNER JOIN books
         ON cart_items.book_id = books.id
     WHERE carts.user_id = $1
-    AND cart_items.book_id = $2
-    AND cart_items.cart_id = $3`,
-    [req.user.id, req.params.bookId, cartId],
+    AND cart_items.book_id = $2`,
+    [req.user.id, req.params.bookId],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -55,8 +53,8 @@ cart_items.get("/:bookId", (req, res, next) => {
 cart_items.post("/", (req, res, next) => {
   const { bookId, quantity } = req.body;
   db.query(
-    `INSERT INTO cart_items (cart_id, book_id, quantity) VALUES ($1, $2, $3)`,
-    [req.params.cartId, bookId, quantity],
+    `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)`,
+    [req.user.id, bookId, quantity],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
@@ -73,9 +71,9 @@ cart_items.put("/:bookId", (req, res, next) => {
   db.query(
     `UPDATE cart_items
     SET quantity = $1
-    WHERE cart_id = $2
+    WHERE user_id = $2
     AND book_id = $3`,
-    [quantity, req.params.cartId, req.params.bookId],
+    [quantity, req.user.id, req.params.bookId],
     (error, results) => {
       res.status(200).send("Cart order updated!");
     }
@@ -86,9 +84,9 @@ cart_items.put("/:bookId", (req, res, next) => {
 cart_items.delete("/:bookId", (req, res, next) => {
   db.query(
     `DELETE FROM cart_items
-        WHERE cart_id = $1
+        WHERE user_id = $1
         AND book_id = $2`,
-    [req.params.cartId, req.params.bookId],
+    [req.user.id, req.params.bookId],
     (error, results) => {
       res.status(204);
     }
