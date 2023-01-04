@@ -4,9 +4,7 @@ import { fetchOrder, fetchOrders } from "../../apis/orders";
 export const loadAllOrders = createAsyncThunk("orders/loadOrders", async () => {
   try {
     const response = await fetchOrders();
-    return {
-      order: response,
-    };
+    return response;
   } catch (err) {
     throw err;
   }
@@ -17,9 +15,7 @@ export const loadOrder = createAsyncThunk(
   async (orderId) => {
     try {
       const response = await fetchOrder(orderId);
-      return {
-        orders: response,
-      };
+      return response;
     } catch (err) {
       throw err;
     }

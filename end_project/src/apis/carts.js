@@ -25,6 +25,19 @@ export const addToCart = async (bookId, quantity) => {
   }
 };
 
+// API interface for changing the quantity of an item in the cart
+export const modifyQuantity = async (bookId, quantity) => {
+  try {
+    const response = await apiAxios.put(`/users/carts/cart_items/${bookId}`, {
+      quantity,
+    });
+
+    return response.data;
+  } catch (err) {
+    throw err.response.data;
+  }
+};
+
 // API interface for removing a product from a user's cart
 export const removeFromCart = async (bookId) => {
   try {

@@ -4,9 +4,7 @@ import { fetchAllBooks, fetchBook } from "../../apis/books";
 export const loadAllBooks = createAsyncThunk("books/loadAllBooks", async () => {
   try {
     const response = await fetchAllBooks();
-    return {
-      books: response,
-    };
+    return response;
   } catch (err) {
     throw err;
   }
@@ -15,9 +13,7 @@ export const loadAllBooks = createAsyncThunk("books/loadAllBooks", async () => {
 export const loadBook = createAsyncThunk("books/loadBook", async (params) => {
   try {
     const response = await fetchBook(params);
-    return {
-      book: response,
-    };
+    return response;
   } catch (err) {
     throw err;
   }

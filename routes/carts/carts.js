@@ -30,6 +30,8 @@ carts.get("/", (req, res) => {
         res.status(400).send(error.stack);
       } else if (results.rows.length > 0) {
         res.status(200).json(results.rows);
+      } else if (results.rows.length === 0) {
+        res.send("Your cart is empty!");
       }
     }
   );
