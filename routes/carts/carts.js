@@ -31,7 +31,7 @@ carts.get("/", (req, res) => {
       } else if (results.rows.length > 0) {
         res.status(200).json(results.rows);
       } else if (results.rows.length === 0) {
-        res.send("Your cart is empty!");
+        res.json({ message: "Your cart is empty!" });
       }
     }
   );
@@ -50,7 +50,7 @@ const hasCart = (req, res, next) => {
         res.status(400).send(error.message);
       }
       if (results.rows.length) {
-        res.send("You already have a cart!");
+        res.json({ message: "You already have a cart!" });
       } else {
         next();
       }
@@ -60,26 +60,35 @@ const hasCart = (req, res, next) => {
 
 // Creates a cart for the user
 carts.post("/", hasCart, (req, res) => {
-  db.query("INSERT INTO carts WHERE user_id = $1", [req.user.id], (error) => {
-    if (error) {
-      res.status(400).send(error.stack);
-    } else {
-      res.status(201).send("Cart created");
+  db.query(
+    "INSERT INTO carts (user_id) VALUES ($1) RETURNING id, user_id",
+    [req.user.id],
+    (error, results) => {
+      if (error) {
+        res.status(400).send(error.stack);
+      } else {
+        console.log(results.rows.id);
+        res.status(201).json({
+          message: "Cart Created!",
+          id: results.rows[0].id,
+          user_id: results.rows[0].user_id,
+        });
+      }
     }
-  });
+  );
 });
 
 // Check if cart is empty first (no cart_items)
 const isEmpty = (req, res, next) =>
   db.query(
     `SELECT * FROM cart_items 
-    WHERE cart_id = $1`,
-    [req.params.cartId],
+    WHERE user_id = $1`,
+    [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length) {
-        res.send("The cart needs to be empty first!");
+        res.json({ message: "The cart needs to be empty first!" });
       } else {
         next();
       }
@@ -90,13 +99,18 @@ const isEmpty = (req, res, next) =>
 carts.delete("/", isEmpty, (req, res) => {
   db.query(
     `DELETE FROM carts
-    WHERE user_id = $1`,
+    WHERE user_id = $1
+    RETURNING id, user_id`,
     [req.user.id],
-    (error) => {
+    (error, results) => {
       if (error) {
-        res.status(400).send(error.stack);
+        res.status(400).send(error.message);
       } else {
-        res.status(204).send();
+        res.status(204).json({
+          message: "Your cart has been deleted!",
+          id: results.rows[0].id,
+          user_id: results.rows[0].user_id,
+        });
       }
     }
   );
@@ -116,7 +130,7 @@ const checkCartExistence = (req, res, next) => {
       } else if (results.rows.length) {
         next();
       } else {
-        res.send("This cart is empty!");
+        res.json({ message: "This cart is empty!" });
       }
     }
   );

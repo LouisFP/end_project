@@ -1,7 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
-import usersReducer from ".//features/users/usersSlice";
-import booksReducer from ".//features/books/booksSlice";
-import ordersReducer from ".//features/orders/ordersSlice";
+import usersReducer from "./users/usersSlice";
+import booksReducer from "./books/booksSlice";
+import ordersReducer from "./orders/ordersSlice";
+import cartsReducer from "./cart/cartsSlice";
 
 // Redux persist for persistence of the store upon reloading the app
 // import { persistStore, persistReducer } from "redux-persist";
@@ -19,5 +20,6 @@ export const store = configureStore({
     users: usersReducer,
     books: booksReducer,
     orders: ordersReducer,
+    carts: cartsReducer,
   },
 });

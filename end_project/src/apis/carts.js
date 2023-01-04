@@ -50,7 +50,7 @@ export const removeFromCart = async (bookId) => {
 };
 
 // API interface for checking out a user's cart
-export const checkoutCart = async (paymentInfo) => {
+export const checkout = async (paymentInfo) => {
   try {
     const response = await apiAxios.post(`/users/carts/checkout`, {
       paymentInfo,

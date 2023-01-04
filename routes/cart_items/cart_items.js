@@ -12,7 +12,7 @@ cart_items.param("bookId", (req, res, next, id) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length === 0) {
-        res.status(404).send("Book not found");
+        res.status(404).json({ message: "Book not found" });
       } else {
         req.bookIndex = results.rows[0].book_id;
         next();
@@ -43,7 +43,7 @@ cart_items.get("/:bookId", (req, res, next) => {
       } else if (results.rows.length > 0) {
         res.status(200).json(results.rows);
       } else {
-        res.status(404).send("Cart item not found");
+        res.status(404).json({ message: "Cart item not found" });
       }
     }
   );
@@ -53,13 +53,19 @@ cart_items.get("/:bookId", (req, res, next) => {
 cart_items.post("/", (req, res, next) => {
   const { bookId, quantity } = req.body;
   db.query(
-    `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)`,
+    `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)
+    RETURNING user_id, book_id, quantity`,
     [req.user.id, bookId, quantity],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
-        res.status(201).send("Added to cart!");
+        res.status(201).json({
+          message: "Added to cart!",
+          user_id: results.rows[0].user_id,
+          book_id: results.rows[0].book_id,
+          quantity: results.rows[0].quantity,
+        });
       }
     }
   );
@@ -72,10 +78,18 @@ cart_items.put("/:bookId", (req, res, next) => {
     `UPDATE cart_items
     SET quantity = $1
     WHERE user_id = $2
-    AND book_id = $3`,
+    AND book_id = $3
+    RETURNING user_id, book_id, quantity`,
     [quantity, req.user.id, req.params.bookId],
     (error, results) => {
-      res.status(200).send("Cart order updated!");
+      res
+        .status(200)
+        .json({
+          message: "Cart order updated!",
+          user_id: results.rows[0].user_id,
+          book_id: results.rows[0].book_id,
+          quantity: results.rows[0].quantity,
+        });
     }
   );
 });
@@ -85,10 +99,16 @@ cart_items.delete("/:bookId", (req, res, next) => {
   db.query(
     `DELETE FROM cart_items
         WHERE user_id = $1
-        AND book_id = $2`,
+        AND book_id = $2
+        RETURNING user_id, book_id, quantity`,
     [req.user.id, req.params.bookId],
     (error, results) => {
-      res.status(204);
+      res.status(204).json({
+        message: "The book has been removed from your cart!",
+        user_id: results.rows[0].user_id,
+        book_id: results.rows[0].book_id,
+        quantity: results.rows[0].quantity,
+      });
     }
   );
 });

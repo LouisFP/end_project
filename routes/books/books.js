@@ -18,9 +18,8 @@ const hasCartItems = (req, res, next) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length) {
-        res.status(400).send("This book is in someone's cart!");
+        res.status(400).json({ message: "This book is in someone's cart!" });
       } else {
-        console.log("All good, passes the test!");
         next();
       }
     }
@@ -37,7 +36,7 @@ books.param("bookId", (req, res, next, id) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length === 0) {
-        res.status(404).send("Book not found");
+        res.status(404).json({ message: "Book not found" });
       } else {
         req.bookIndex = results.rows[0].id;
         next();
@@ -66,8 +65,12 @@ books.get("/:bookId", (req, res) => {
   db.query(
     "SELECT * FROM books WHERE id = $1",
     [req.bookIndex],
-    (error, results) => {
-      res.status(200).json(results.rows);
+    (errpr, results) => {
+      if (error) {
+        res.send(error.message);
+      } else {
+        res.status(200).json(results.rows);
+      }
     }
   );
 });
@@ -77,13 +80,21 @@ books.post("/", isAdmin, (req, res) => {
   const { title, author, num_of_pages, genre, price } = req.body;
 
   db.query(
-    "INSERT INTO books (title, author, num_of_pages, genre, price) VALUES ($1, $2, $3, $4, $5)",
+    `INSERT INTO books (title, author, num_of_pages, genre, price) VALUES ($1, $2, $3, $4, $5)
+    RETURNING id, title, author, num_of_pages, genre, price`,
     [title, author, num_of_pages, genre, price],
-    (error) => {
+    (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
-        res.status(201).send(`Book added!`);
+        res.status(201).json({
+          message: "Book added!",
+          id: results.rows[0].id,
+          title: results.rows[0].title,
+          author: results.rows[0].author,
+          genre: results.rows[0].genre,
+          price: results.rows[0].price,
+        });
       }
     }
   );
@@ -93,19 +104,48 @@ books.post("/", isAdmin, (req, res) => {
 books.put("/:bookId", isAdmin, (req, res) => {
   const { price } = req.body;
   db.query(
-    "UPDATE books SET price = $1 WHERE id = $2",
+    `UPDATE books SET price = $1 WHERE id = $2
+    RETURNING id, title, author, num_of_pages, genre, price`,
     [price, req.bookIndex],
-    () => {
-      res.status(200).send(`Book with id ${req.bookIndex}: price updated!`);
+    (error, results) => {
+      if (error) {
+        res.status(400).send(error.message);
+      } else {
+        res.status(200).json({
+          message: "Book with id ${req.bookIndex}: price updated!",
+          title: results.rows[0].title,
+          author: results.rows[0].author,
+          num_of_pages: num_of_pages,
+          genre: results.rows[0].genre,
+          price: results.rows[0].price,
+        });
+      }
     }
   );
 });
 
 // Deletes a book by its bookId
 books.delete("/:bookId", isAdmin, hasCartItems, (req, res) => {
-  db.query("DELETE FROM books WHERE id = $1", [req.bookIndex], () => {
-    res.status(204).send(`Book deleted!`);
-  });
+  db.query(
+    `DELETE FROM books WHERE id = $1
+    RETURNING id, title, author, price, num_of_pages, genre, price`,
+    [req.bookIndex],
+    (error, results) => {
+      if (error) {
+        res.send(error.message);
+      } else {
+        res.status(204).json({
+          message: "Book deleted!",
+          id: results.rows[0].id,
+          title: results.rows[0].title,
+          author: results.rows[0].author,
+          num_of_pages: results.rows[0].num_of_pages,
+          genre: results.rows[0].genre,
+          price: results.rows[0].price,
+        });
+      }
+    }
+  );
 });
 
 module.exports = books;

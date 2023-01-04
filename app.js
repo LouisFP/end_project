@@ -84,7 +84,7 @@ app.use(passport.session());
 // Express routing
 require("./routes/passport")(passport, db);
 app.use("/api/books", isLoggedIn, books);
-app.use("/api/users", isLoggedIn, users);
+app.use("/api/users", users);
 app.use("/api/orders", isLoggedIn, orders.orders);
 
 // Log in User

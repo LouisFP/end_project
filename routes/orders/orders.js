@@ -40,7 +40,7 @@ orders.get("/:orderId", (req, res, next) => {
       } else if (results.rows.length) {
         res.status(200).json(results.rows);
       } else {
-        res.status(404).send("No order found!");
+        res.status(404).json({ message: "No order found!" });
       }
     }
   );
@@ -56,8 +56,7 @@ const deleteOrder = (orderId) => {
       if (error) {
         throw new error();
       }
-      res.write("Order has been deleted");
-      res.end();
+      res.json({ message: "Order has been deleted" });
     }
   );
 };
