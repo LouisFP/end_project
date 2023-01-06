@@ -9,8 +9,13 @@ import {
 
 export const loadCart = createAsyncThunk("carts/loadCart", async () => {
   try {
-    const response = fetchCart();
-    return response;
+    const data = fetchCart();
+    const cart = {};
+
+    data.forEach((cartBook) => {
+      cart[cartBook.book_id] = cartBook;
+    });
+    return cart;
   } catch (err) {
     throw err;
   }
@@ -92,19 +97,45 @@ const cartsSlice = createSlice({
       })
       .addCase(addItem.fulfilled, (state, action) => {
         state.addItemStatus = "fulfilled";
-        state[action.payload.user_Id] = action.payload;
+        state.cartBooks[action.payload.book_id] = action.payload;
       })
-      .addCase(addItem.rejected, (state) => {})
-      .addCase(changeQuantity.pending, (state) => {})
-      .addCase(changeQuantity.fulfilled, (state, action) => {})
-      .addCase(changeQuantity.rejected, (state) => {})
-      .addCase(removeItem.pending, (state) => {})
-      .addCase(removeItem.fulfilled, (state, action) => {})
-      .addCase(removeItem.rejected, (state) => {})
-      .addCase(checkoutCart.pending, (state) => {})
-      .addCase(checkoutCart.fulfilled, (state, action) => {})
-      .addCase(checkoutCart.rejected, (state) => {});
+      .addCase(addItem.rejected, (state) => {
+        state.addItemStatus = "rejected";
+      })
+      .addCase(changeQuantity.pending, (state) => {
+        state.changeQuantityStatus = "pending";
+      })
+      .addCase(changeQuantity.fulfilled, (state, action) => {
+        state.changeQuantityStatus = "fulfilled";
+        state.cartBooks[action.payload.book_id].quantity =
+          action.payload.quantity;
+      })
+      .addCase(changeQuantity.rejected, (state) => {
+        state.changeQuantityStatus = "rejected";
+      })
+      .addCase(removeItem.pending, (state) => {
+        state.removeItemStatus = "pending";
+      })
+      .addCase(removeItem.fulfilled, (state, action) => {
+        state.removeItemStatus = "fulfilled";
+        delete state.cartBooks[action.payload.book_id];
+      })
+      .addCase(removeItem.rejected, (state) => {
+        state.removeItemStatus = "rejected";
+      })
+      .addCase(checkoutCart.pending, (state) => {
+        state.checkoutCartStatus = "pending";
+      })
+      .addCase(checkoutCart.fulfilled, (state, action) => {
+        state.checkoutCartStatus = "fulfilled";
+      })
+      .addCase(checkoutCart.rejected, (state) => {
+        state.checkoutCartStatus = "rejected";
+      });
   },
 });
+
+export const selectCart = (state) => state.carts.cartBooks;
+export const selectFetchCartStatus = (state) => state.carts.fetchCartStatus;
 
 export default cartsSlice.reducer;

@@ -8,7 +8,7 @@ const { isLoggedIn, isAdmin } = require("../../db/helper");
 
 users.use(bodyParser.urlencoded({ extended: true }));
 
-users.use("/carts", carts);
+users.use("/carts", isLoggedIn, carts);
 
 // Get all users
 users.get("/all", isLoggedIn, isAdmin, async (req, res) => {
@@ -80,10 +80,11 @@ users.post("/register", async (req, res, next) => {
           `INSERT INTO users (username, password, email) VALUES ($1, $2, $3)
           RETURNING id, username, password, email, isadmin`,
           [username, hashedPassword, email],
-          (error) => {
+          (error, results) => {
             if (error) {
               res.status(400).send(error.stack);
             } else {
+              console.log(results.rows[0]);
               res.status(201).json({
                 message: "Your registration was successful!",
                 id: results.rows[0].id,

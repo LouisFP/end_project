@@ -21,7 +21,7 @@ cart_items.param("bookId", (req, res, next, id) => {
   );
 });
 
-// Get a cartItem for a user by cartId and bookId
+// Get a cartItem for a user by bookId
 cart_items.get("/:bookId", (req, res, next) => {
   db.query(
     `SELECT 
@@ -49,19 +49,42 @@ cart_items.get("/:bookId", (req, res, next) => {
   );
 });
 
+// Tests if cart already has an element with that book_id
+const hasBook = (req, res, next) => {
+  const { book_id } = req.body;
+  db.query(
+    `SELECT
+      *
+    FROM cart_items
+    WHERE book_id = $1`,
+    [book_id],
+    (error, results) => {
+      if (error) {
+        res.send(error.message);
+      } else if (results.rows.length) {
+        res.json({ message: "This item already exists in your cart!" });
+      } else {
+        next();
+      }
+    }
+  );
+};
+
 // Create a cart_item
-cart_items.post("/", (req, res, next) => {
-  const { bookId, quantity } = req.body;
+cart_items.post("/", hasBook, (req, res, next) => {
+  const { book_id, quantity } = req.body;
+  console.log(book_id);
   db.query(
     `INSERT INTO cart_items (user_id, book_id, quantity) VALUES ($1, $2, $3)
-    RETURNING user_id, book_id, quantity`,
-    [req.user.id, bookId, quantity],
+    RETURNING id, user_id, book_id, quantity`,
+    [req.user.id, book_id, quantity],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else {
         res.status(201).json({
           message: "Added to cart!",
+          id: results.rows[0].id,
           user_id: results.rows[0].user_id,
           book_id: results.rows[0].book_id,
           quantity: results.rows[0].quantity,
@@ -79,17 +102,20 @@ cart_items.put("/:bookId", (req, res, next) => {
     SET quantity = $1
     WHERE user_id = $2
     AND book_id = $3
-    RETURNING user_id, book_id, quantity`,
+    RETURNING id, user_id, book_id, quantity`,
     [quantity, req.user.id, req.params.bookId],
     (error, results) => {
-      res
-        .status(200)
-        .json({
+      if (error) {
+        res.status(400).send(error.message);
+      } else {
+        res.status(200).json({
           message: "Cart order updated!",
+          id: results.rows[0].id,
           user_id: results.rows[0].user_id,
           book_id: results.rows[0].book_id,
           quantity: results.rows[0].quantity,
         });
+      }
     }
   );
 });
@@ -100,15 +126,20 @@ cart_items.delete("/:bookId", (req, res, next) => {
     `DELETE FROM cart_items
         WHERE user_id = $1
         AND book_id = $2
-        RETURNING user_id, book_id, quantity`,
+        RETURNING id, user_id, book_id, quantity`,
     [req.user.id, req.params.bookId],
     (error, results) => {
-      res.status(204).json({
-        message: "The book has been removed from your cart!",
-        user_id: results.rows[0].user_id,
-        book_id: results.rows[0].book_id,
-        quantity: results.rows[0].quantity,
-      });
+      if (error) {
+        res.status(400).send(error.message);
+      } else {
+        res.status(204).json({
+          message: "The book has been removed from your cart!",
+          id: results.rows[0].id,
+          user_id: results.rows[0].user_id,
+          book_id: results.rows[0].book_id,
+          quantity: results.rows[0].quantity,
+        });
+      }
     }
   );
 });

@@ -35,6 +35,8 @@ module.exports = (passport, db) => {
                 done(null, {
                   id: data.id,
                   username: data.username,
+                  password: data.password,
+                  email: data.email,
                   isadmin: data.isadmin,
                 });
               } else {

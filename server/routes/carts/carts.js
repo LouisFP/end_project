@@ -3,32 +3,30 @@ const db = require("../../db");
 const bodyParser = require("body-parser");
 const cart_item = require("../cart_items/cart_items");
 const orders = require("../orders/orders");
+const { isLoggedIn } = require("../../db/helper");
 
 const carts = express.Router({ mergeParams: true });
 
 carts.use(bodyParser.json());
 
-carts.use("/cart_items", cart_item);
+carts.use("/cart_items", isLoggedIn, cart_item);
 
 // Gets a user's cart (title, author, price, quantity)
 carts.get("/", (req, res) => {
   db.query(
     `SELECT 
-        books.title, 
-        books.author, 
-        books.price, 
-        cart_items.quantity 
-    FROM carts
-    INNER JOIN cart_items
-        ON carts.user_id = cart_items.user_id
-    INNER JOIN books
-        ON cart_items.book_id = books.id
-    WHERE carts.user_id = $1`,
+      id,
+      user_id,
+      book_id,
+      quantity
+    FROM cart_items  
+    WHERE cart_items.user_id = $1`,
     [req.user.id],
     (error, results) => {
       if (error) {
         res.status(400).send(error.stack);
       } else if (results.rows.length > 0) {
+        console.log(results.rows);
         res.status(200).json(results.rows);
       } else if (results.rows.length === 0) {
         res.json({ message: "Your cart is empty!" });
@@ -234,7 +232,6 @@ carts.post("/checkout", checkCartExistence, async (req, res) => {
         [result.rows[0].sum, cart_ordersById.rows[0].id],
         (error) => {
           if (error) {
-            console.log(error.message);
             res.write(error.message);
           } else {
             res.write("Order made\n");

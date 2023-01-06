@@ -8,6 +8,7 @@ const cors = require("cors");
 const flash = require("connect-flash");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
 // Cross-site request forgery protection
 const { csrfSync } = require("csrf-sync");
@@ -41,6 +42,7 @@ app.use(cors());
 app.use(logger("dev"));
 app.use(cookieParser());
 app.use(bodyParser.json());
+app.use(express.static(__dirname + "/public"));
 
 // Session middlware
 app.use(
@@ -89,9 +91,9 @@ app.use("/api/orders", isLoggedIn, orders.orders);
 
 // Log in User
 app.post(
-  "/api/login",
+  "/api/users/login",
   passport.authenticate("local", {
-    failureRedirect: "/login/failure",
+    failureRedirect: "/api/users/login/failure",
     failureFlash: true,
   }),
   (req, res) => {
@@ -99,13 +101,12 @@ app.post(
       if (err) {
         return res.json({ error: err });
       }
-      res.send(req.user);
+      res.status(200).json(req.user);
     });
   }
 );
 
-app.post("/login/failure", (req, res) => {
-  console.log("Gone past me");
+app.post("/api/users/login/failure", (req, res) => {
   console.log(req.session.flash.error);
   let flashLength = req.session.flash.error.length;
   let latestError = { error: req.session.flash.error[flashLength - 1] };
@@ -118,6 +119,10 @@ app.get("/api/logout", (req, res, next) => {
     return next(err);
   });
   res.status(200).send("User is logged out!");
+});
+
+app.get("/*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "end_project/public/index.html"));
 });
 
 app.listen(PORT, () => {
