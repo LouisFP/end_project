@@ -34,7 +34,7 @@ export const addItem = createAsyncThunk(
 );
 
 export const changeQuantity = createAsyncThunk(
-  "cart/changeQuantity",
+  "carts/changeQuantity",
   async (bookId, quantity) => {
     try {
       const response = await modifyQuantity(bookId, quantity);

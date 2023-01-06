@@ -2,15 +2,18 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { fetchUser } from "../../apis/users";
 import { login, register } from "../../apis/auth";
 
-export const fetchCurrentUser = createAsyncThunk("users/loadUser", async () => {
-  try {
-    const response = await fetchUser();
+export const fetchCurrentUser = createAsyncThunk(
+  "users/fetchCurrentUser",
+  async () => {
+    try {
+      const response = await fetchUser();
 
-    return response;
-  } catch (err) {
-    throw err;
+      return response;
+    } catch (err) {
+      throw err;
+    }
   }
-});
+);
 
 export const loginUser = createAsyncThunk(
   "users/loginUser",

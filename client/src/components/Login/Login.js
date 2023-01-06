@@ -4,7 +4,7 @@ import { loginUser, selectCurrentUser } from "../../features/users/usersSlice";
 // React Hook Form Validation
 import { useForm } from "react-hook-form";
 
-const Login = () => {
+function Login() {
   const {
     register,
     handleSubmit,
@@ -26,6 +26,6 @@ const Login = () => {
       <input type="submit" />
     </div>
   );
-};
+}
 
 export default Login;

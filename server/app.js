@@ -34,7 +34,6 @@ liveReloadServer.server.once("connection", () => {
     liveReloadServer.refresh("/");
   }, 100);
 });
-app.use(connectLiveReload());
 
 // Middleware for logging and parsing and others
 app.set("trust proxy", 1);
@@ -42,7 +41,9 @@ app.use(cors());
 app.use(logger("dev"));
 app.use(cookieParser());
 app.use(bodyParser.json());
-app.use(express.static(__dirname + "/public"));
+app.use("/static", express.static(path.join(__dirname, "/client/public")));
+
+app.use(connectLiveReload());
 
 // Session middlware
 app.use(
@@ -78,7 +79,17 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "script-src": ["'self'", "http://localhost:35729/livereload.js"],
+      },
+    },
+    crossOriginResourcePolicy: false,
+  })
+);
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
@@ -118,11 +129,13 @@ app.get("/api/logout", (req, res, next) => {
   req.logout((err) => {
     return next(err);
   });
-  res.status(200).send("User is logged out!");
+  res.status(200).json({ message: "User is logged out!" });
 });
 
-app.get("/*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "end_project/public/index.html"));
+app.get("*", (req, res) => {
+  res.sendFile("index.html", {
+    root: path.join(__dirname, "../client/public"),
+  });
 });
 
 app.listen(PORT, () => {

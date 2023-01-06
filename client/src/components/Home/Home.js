@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { loadAllBooks } from "../../features/books/booksSlice";
+import { loadAllBooks, selectBooks } from "../../features/books/booksSlice";
 
-const Home = () => {
+function Home() {
   const dispatch = useDispatch();
+  const books = useSelector(selectBooks);
 
   useEffect(() => {
     async function load() {
@@ -18,6 +19,6 @@ const Home = () => {
       <p>Hello World!</p>
     </div>
   );
-};
+}
 
 export default Home;
