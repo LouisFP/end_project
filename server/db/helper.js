@@ -12,7 +12,7 @@ async function isLoggedIn(req, res, next) {
   if (await req.user) {
     next();
   } else {
-    res.status(400).send({ message: "Please login!" });
+    res.status(400).json({ message: "Please login!" });
   }
 }
 module.exports = {

@@ -3,7 +3,7 @@ import apiAxios from "./axios";
 // API interface for getting the user's cart
 export const fetchCart = async () => {
   try {
-    const response = await apiAxios.get(`/users/carts`);
+    const response = await apiAxios.get(`users/carts`);
 
     return response.data;
   } catch (err) {
@@ -14,7 +14,7 @@ export const fetchCart = async () => {
 // API interface for adding a product to a user's cart
 export const addToCart = async (bookId, quantity) => {
   try {
-    const response = await apiAxios.post(`/users/carts/cart_items`, {
+    const response = await apiAxios.post(`users/carts/cart_items`, {
       bookId,
       quantity,
     });
@@ -28,7 +28,7 @@ export const addToCart = async (bookId, quantity) => {
 // API interface for changing the quantity of an item in the cart
 export const modifyQuantity = async (bookId, quantity) => {
   try {
-    const response = await apiAxios.put(`/users/carts/cart_items/${bookId}`, {
+    const response = await apiAxios.put(`users/carts/cart_items/${bookId}`, {
       quantity,
     });
 
@@ -41,7 +41,7 @@ export const modifyQuantity = async (bookId, quantity) => {
 // API interface for removing a product from a user's cart
 export const removeFromCart = async (bookId) => {
   try {
-    const response = await apiAxios.delete(`/users/carts/cart_items/${bookId}`);
+    const response = await apiAxios.delete(`users/carts/cart_items/${bookId}`);
 
     return response.data;
   } catch (err) {
@@ -52,7 +52,7 @@ export const removeFromCart = async (bookId) => {
 // API interface for checking out a user's cart
 export const checkout = async (paymentInfo) => {
   try {
-    const response = await apiAxios.post(`/users/carts/checkout`, {
+    const response = await apiAxios.post(`users/carts/checkout`, {
       paymentInfo,
     });
 

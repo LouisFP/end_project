@@ -15,7 +15,7 @@ function Login() {
 
   return (
     <div className="loginForm">
-      <form onSubmit={handleSubmit(onSubmit)} />;
+      <form onSubmit={handleSubmit(onSubmit)} />
       <input
         type="text"
         name="username"

@@ -82,14 +82,14 @@ const cartsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchCart.pending, (state) => {
+      .addCase(loadCart.pending, (state) => {
         state.fetchCartStatus = "pending";
       })
-      .addCase(fetchCart.fulfilled, (state, action) => {
+      .addCase(loadCart.fulfilled, (state, action) => {
         state.fetchCartStatus = "fulfilled";
         state.cartBooks = action.payload;
       })
-      .addCase(fetchCart.rejected, (state) => {
+      .addCase(loadCart.rejected, (state) => {
         state.fetchCartStatus = "rejected";
       })
       .addCase(addItem.pending, (state) => {
@@ -126,7 +126,7 @@ const cartsSlice = createSlice({
       .addCase(checkoutCart.pending, (state) => {
         state.checkoutCartStatus = "pending";
       })
-      .addCase(checkoutCart.fulfilled, (state, action) => {
+      .addCase(checkoutCart.fulfilled, (state) => {
         state.checkoutCartStatus = "fulfilled";
       })
       .addCase(checkoutCart.rejected, (state) => {
