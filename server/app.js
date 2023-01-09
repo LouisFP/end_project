@@ -15,7 +15,7 @@ const { csrfSync } = require("csrf-sync");
 const { generateToken, csrfSynchronisedProtection } = csrfSync();
 
 const { v4: uuidv4 } = require("uuid");
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 // Express routing imports
 const { isLoggedIn } = require("./db/helper.js");
@@ -24,6 +24,9 @@ const users = require("./routes/users/users");
 const orders = require("./routes/orders/orders");
 
 const app = express();
+
+// Cross-origins-resource-security
+app.use(cors());
 
 // Live Reload material
 const livereload = require("livereload");
@@ -37,7 +40,6 @@ liveReloadServer.server.once("connection", () => {
 
 // Middleware for logging and parsing and others
 app.set("trust proxy", 1);
-app.use(cors());
 app.use(logger("dev"));
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -84,21 +86,29 @@ app.use(
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
-        "script-src": ["'self'", "http://localhost:35729/livereload.js"],
+        "script-src": [
+          "'self'",
+          "http://localhost:35729/livereload.js",
+          "https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js",
+        ],
       },
     },
-    crossOriginResourcePolicy: false,
   })
 );
+
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Express routing
+
+/////////////////////////////////////////////
+// Add isLoggedIn back to books and orders //
+/////////////////////////////////////////////
 require("./routes/passport")(passport, db);
-app.use("/api/books", isLoggedIn, books);
+app.use("/api/books", books);
 app.use("/api/users", users);
-app.use("/api/orders", isLoggedIn, orders.orders);
+app.use("/api/orders", orders.orders);
 
 // Log in User
 app.post(
@@ -121,7 +131,7 @@ app.post("/api/users/login/failure", (req, res) => {
   console.log(req.session.flash.error);
   let flashLength = req.session.flash.error.length;
   let latestError = { error: req.session.flash.error[flashLength - 1] };
-  res.status(401).send(latestError);
+  res.status(401).json({ error: latestError });
 });
 
 // Log out User
@@ -132,10 +142,11 @@ app.get("/api/logout", (req, res, next) => {
   res.status(200).json({ message: "User is logged out!" });
 });
 
-app.get("*", (req, res) => {
+app.get("/", (req, res) => {
   res.sendFile("index.html", {
     root: path.join(__dirname, "../client/public"),
   });
+  res.json({ message: "Hello World!" });
 });
 
 app.listen(PORT, () => {
