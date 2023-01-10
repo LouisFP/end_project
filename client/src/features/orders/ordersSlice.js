@@ -41,7 +41,7 @@ const ordersSlice = createSlice({
       .addCase(loadAllOrders.fulfilled, (state, action) => {
         state.loadingAllOrders = false;
         state.failedToLoadOrders = false;
-        const { orders } = action.payload;
+        const orders = action.payload;
         orders.forEach((order) => {
           const { id } = order;
           state[id] = order;
@@ -58,7 +58,7 @@ const ordersSlice = createSlice({
       .addCase(loadOrder.fulfilled, (state, action) => {
         state.loadingOrder = false;
         state.failedToLoadOrder = false;
-        const { order } = action.payload;
+        const order = action.payload;
         state[order.id] = order;
       })
       .addCase(loadOrder.rejected, (state) => {

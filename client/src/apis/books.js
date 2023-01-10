@@ -4,7 +4,6 @@ import apiAxios from "./axios";
 export const fetchAllBooks = async () => {
   try {
     const response = await apiAxios.get("books");
-    console.log(response);
     return response.data;
   } catch (err) {
     throw err.response.data;

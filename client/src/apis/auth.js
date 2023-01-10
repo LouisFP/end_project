@@ -4,7 +4,6 @@ import apiAxios from "./axios";
 export const login = async (credentials) => {
   try {
     const response = await apiAxios.post("users/login", credentials);
-
     return response.data;
   } catch (err) {
     throw err.response.data;

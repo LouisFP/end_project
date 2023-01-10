@@ -15,7 +15,7 @@ const { csrfSync } = require("csrf-sync");
 const { generateToken, csrfSynchronisedProtection } = csrfSync();
 
 const { v4: uuidv4 } = require("uuid");
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT;
 
 // Express routing imports
 const { isLoggedIn } = require("./db/helper.js");
@@ -73,13 +73,15 @@ app.use(
 
 // Rate limiting
 const rateLimit = require("express-rate-limit");
+const { domainToASCII } = require("url");
 
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 5,
 });
 
-app.use(limiter);
+// ADD THIS BACK IN
+// app.use(limiter);
 
 app.use(
   helmet({
@@ -120,18 +122,18 @@ app.post(
   (req, res) => {
     req.logIn(req.user, (err) => {
       if (err) {
-        return res.json({ error: err });
+        res.json({ error: err });
       }
       res.status(200).json(req.user);
     });
   }
 );
 
-app.post("/api/users/login/failure", (req, res) => {
-  console.log(req.session.flash.error);
+app.get("/api/users/login/failure", (req, res) => {
+  console.log(req.session);
   let flashLength = req.session.flash.error.length;
-  let latestError = { error: req.session.flash.error[flashLength - 1] };
-  res.status(401).json({ error: latestError });
+  let latestError = req.session.flash.error[flashLength - 1];
+  res.status(401).json({ latestError });
 });
 
 // Log out User

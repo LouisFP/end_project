@@ -50,10 +50,9 @@ books.use(bodyParser.json());
 
 // Gets all books
 books.get("/", (req, res) => {
-  console.log(req.user);
   db.query("SELECT * FROM books ORDER BY id ASC", (error, results) => {
     if (error) {
-      res.status(400).send(error.stack);
+      res.status(400).json(error.message);
     } else {
       res.status(200).json(results.rows);
     }

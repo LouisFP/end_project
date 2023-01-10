@@ -26,7 +26,7 @@ const booksSlice = createSlice({
     failedToLoadBooks: false,
     loadingBook: false,
     failedToLoadBook: false,
-    books: {},
+    allBooks: {},
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -38,10 +38,10 @@ const booksSlice = createSlice({
       .addCase(loadAllBooks.fulfilled, (state, action) => {
         state.loadingAllBooks = false;
         state.failedToLoadBooks = false;
-        const { books } = action.payload;
+        const books = action.payload;
         books.forEach((book) => {
           const { id } = book;
-          state[id] = book;
+          state.allBooks[id] = book;
         });
       })
       .addCase(loadAllBooks.rejected, (state) => {
@@ -55,7 +55,7 @@ const booksSlice = createSlice({
       .addCase(loadBook.fulfilled, (state, action) => {
         state.loadingBook = false;
         state.failedToLoadBook = false;
-        const { book } = action.payload;
+        const book = action.payload;
         state[book.id] = book;
       })
       .addCase(loadBook.rejected, (state) => {
@@ -65,7 +65,7 @@ const booksSlice = createSlice({
   },
 });
 
-export const selectBooks = (state) => state.books.books;
+export const selectBooks = (state) => state.books.allBooks;
 export const selectLoadingAllBooks = (state) => state.books.loadingAllBooks;
 export const selectFailedToLoadBooks = (state) => state.books.failedToLoadBooks;
 export const selectLoadingBook = (state) => state.books.loadingBook;
