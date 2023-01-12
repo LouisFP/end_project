@@ -54,8 +54,16 @@ const usersSlice = createSlice({
     isRegistering: false,
     failedToRegister: false,
     error: {},
+    needsLoginRedirect: false,
   },
-  reducers: {},
+  reducers: {
+    currentUserUpdated(state, action) {
+      state.currentUser = action.payload;
+    },
+    needsLoginRedirectUpdated(state, action) {
+      state.needsLoginRedirect = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCurrentUser.pending, (state) => {
@@ -100,13 +108,21 @@ const usersSlice = createSlice({
           email: action.payload.email,
           isadmin: action.payload.isadmin,
         };
+      })
+      .addCase(registerUser.rejected, (state) => {
+        state.isRegistering = false;
+        state.failedToRegister = true;
       });
   },
 });
 
+export const { currentUserUpdated, needsLoginRedirectUpdated } =
+  usersSlice.actions;
 export const selectCurrentUser = (state) => state.users.currentUser;
 export const selectLoadingUser = (state) => state.users.loadingUser;
 export const selectFailedToFetchUser = (state) => state.users.failedToFetchUser;
+export const selectNeedsLoginRedirect = (state) =>
+  state.users.needsLoginRedirect;
 export const selectError = (state) => state.users.error;
 
 export default usersSlice.reducer;

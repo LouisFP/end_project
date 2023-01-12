@@ -27,6 +27,7 @@ const booksSlice = createSlice({
     loadingBook: false,
     failedToLoadBook: false,
     allBooks: {},
+    singlePageBook: {},
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -56,7 +57,7 @@ const booksSlice = createSlice({
         state.loadingBook = false;
         state.failedToLoadBook = false;
         const book = action.payload;
-        state[book.id] = book;
+        state.singlePageBook[book[0].id] = book[0];
       })
       .addCase(loadBook.rejected, (state) => {
         state.loadingBook = false;

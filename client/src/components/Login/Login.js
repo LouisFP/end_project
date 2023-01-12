@@ -1,12 +1,20 @@
 import React from "react";
-import { loginUser, selectCurrentUser } from "../../features/users/usersSlice";
+import {
+  loginUser,
+  needsLoginRedirectUpdated,
+  selectCurrentUser,
+  selectNeedsLoginRedirect,
+} from "../../features/users/usersSlice";
 
 // React Hook Form Validation
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
 function Login() {
   const dispatch = useDispatch();
+  const needsLoginRedirect = useSelector(selectNeedsLoginRedirect);
+  const navigate = useNavigate();
 
   const {
     register,
@@ -15,16 +23,25 @@ function Login() {
     formState: { errors },
   } = useForm();
   const onSubmit = async (data) => {
-    const loginAttempt = await dispatch(
+    await dispatch(
       loginUser({
         username: data.username,
         password: data.password,
       })
     );
+    // If come from a part of the site which requires login
+    // and not logged in then this will send back after logging in
+    if (needsLoginRedirectUpdated) {
+      await dispatch(needsLoginRedirectUpdated(false));
+      navigate(-1);
+    }
   };
 
   return (
     <div className="loginForm">
+      {needsLoginRedirect && (
+        <p className="login-redirect">Please Sign in before continuing</p>
+      )}
       <form onSubmit={handleSubmit(onSubmit)}>
         <label>Username</label>
         <input

@@ -9,6 +9,7 @@ async function isAdmin(req, res, next) {
 
 // Check whether a user is Logged in
 async function isLoggedIn(req, res, next) {
+  console.log(req.session);
   if (await req.user) {
     next();
   } else {

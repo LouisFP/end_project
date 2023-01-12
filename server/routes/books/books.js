@@ -45,9 +45,6 @@ books.param("bookId", (req, res, next, id) => {
   );
 });
 
-// Allows use of req.body by parsing into JSON
-books.use(bodyParser.json());
-
 // Gets all books
 books.get("/", (req, res) => {
   db.query("SELECT * FROM books ORDER BY id ASC", (error, results) => {
@@ -64,7 +61,7 @@ books.get("/:bookId", (req, res) => {
   db.query(
     "SELECT * FROM books WHERE id = $1",
     [req.bookIndex],
-    (errpr, results) => {
+    (error, results) => {
       if (error) {
         res.send(error.message);
       } else {

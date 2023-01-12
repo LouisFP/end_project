@@ -13,6 +13,6 @@ module.exports = {
     semi: "warn",
     eqeqeq: ["warn"],
     "no-unused-vars": "warn",
-    "no-constant-condition": "none",
+    "no-constant-condition": "off",
   },
 };

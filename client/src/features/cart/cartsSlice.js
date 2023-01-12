@@ -15,6 +15,7 @@ export const loadCart = createAsyncThunk("carts/loadCart", async () => {
     data.forEach((cartBook) => {
       cart[cartBook.book_id] = cartBook;
     });
+    console.log(cart);
     return cart;
   } catch (err) {
     throw err;
@@ -79,7 +80,11 @@ const cartsSlice = createSlice({
     removeItemStatus: "idle",
     checkoutCartStatus: "idle",
   },
-  reducers: {},
+  reducers: {
+    cartBooksUpdated(state, action) {
+      state.cartBooks = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(loadCart.pending, (state) => {
@@ -135,6 +140,7 @@ const cartsSlice = createSlice({
   },
 });
 
+export const { cartBooksUpdated } = cartsSlice.actions;
 export const selectCart = (state) => state.carts.cartBooks;
 export const selectFetchCartStatus = (state) => state.carts.fetchCartStatus;
 

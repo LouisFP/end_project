@@ -4,7 +4,6 @@ import apiAxios from "./axios";
 export const fetchCart = async () => {
   try {
     const response = await apiAxios.get(`users/carts`);
-
     return response.data;
   } catch (err) {
     throw err.response.data;

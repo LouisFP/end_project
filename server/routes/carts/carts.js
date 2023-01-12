@@ -13,6 +13,7 @@ carts.use("/cart_items", isLoggedIn, cart_item);
 
 // Gets a user's cart (title, author, price, quantity)
 carts.get("/", (req, res) => {
+  console.log(req.session.id);
   db.query(
     `SELECT 
       id,
@@ -24,9 +25,8 @@ carts.get("/", (req, res) => {
     [req.user.id],
     (error, results) => {
       if (error) {
-        res.status(400).send(error.stack);
+        res.status(400).send(error.message);
       } else if (results.rows.length > 0) {
-        console.log(results.rows);
         res.status(200).json(results.rows);
       } else if (results.rows.length === 0) {
         res.json({ message: "Your cart is empty!" });

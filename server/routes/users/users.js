@@ -8,7 +8,8 @@ const { isLoggedIn, isAdmin } = require("../../db/helper");
 
 users.use(bodyParser.urlencoded({ extended: true }));
 
-users.use("/carts", isLoggedIn, carts);
+// Add isLoggedIn back in
+users.use("/carts", carts);
 
 // Get all users
 users.get("/all", isLoggedIn, isAdmin, async (req, res) => {

@@ -3,10 +3,12 @@ const bcrypt = require("bcrypt");
 
 module.exports = (passport, db) => {
   passport.serializeUser((user, done) => {
+    console.log("Serialising User");
     done(null, user.id);
   });
 
   passport.deserializeUser((id, done) => {
+    console.log("Deserialising User");
     db.query(
       "SELECT id, username, isadmin FROM users WHERE id = $1",
       [id],

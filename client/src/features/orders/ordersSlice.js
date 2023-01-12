@@ -31,7 +31,11 @@ const ordersSlice = createSlice({
     failedToLoadOrder: false,
     orders: {},
   },
-  reducers: {},
+  reducers: {
+    ordersUpdated(state, action) {
+      state.orders = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(loadAllOrders.pending, (state) => {
@@ -68,6 +72,7 @@ const ordersSlice = createSlice({
   },
 });
 
+export const { ordersUpdated } = ordersSlice.actions;
 export const selectOrders = (state) => state.orders.orders;
 export const selectLoadingAllBooks = (state) => state.orders.loadingAllOrders;
 export const selectFailedToLoadOrders = (state) =>
